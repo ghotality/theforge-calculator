@@ -324,6 +324,30 @@ const ARMOR_TYPES = [
     "Heavy Helmet", "Heavy Leggings", "Heavy Chestplate"
 ];
 
+  // Component for Predicted Item Image
+  const PredictedItemImage = ({ image, ratio, alt }: { image: string, ratio: string, alt: string }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    
+    return (
+      <div className="flex flex-col items-center">
+        <img 
+          src={image} 
+          alt={alt}
+          className="h-8 sm:h-10 md:h-12 w-auto object-contain opacity-80"
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageError(true)}
+          style={{ display: imageError ? 'none' : 'block' }}
+        />
+        {imageLoaded && !imageError && (
+          <span className="text-[8px] sm:text-[9px] text-white mt-0.5 font-medium">
+            {ratio}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   // Component for Slot Button to handle its own state cleanly
   const SlotButton = ({ slot, index, onRemoveOne }: { slot: SlotItem | null, index: number, onRemoveOne: (i: number) => void }) => {
       // If empty, render simple disabled-like button
@@ -502,25 +526,6 @@ const ARMOR_TYPES = [
                 </Link>
             </div>
 
-            {/* Info / Credits Section */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-2 sm:gap-4 mb-4 sm:mb-6 text-[10px] sm:text-xs text-zinc-500 font-medium px-2">
-                <span className="text-center">
-                    Support this project by giving a star on{' '}
-                    <a href="https://github.com/ghotality/theforge-calculator" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline inline-flex items-center gap-1">
-                        <GithubIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        GitHub
-                    </a>
-                </span>
-                <span className="hidden md:inline text-zinc-700">•</span>
-                <span className="text-center">
-                    Based on data from{' '}
-                    <a href="https://github.com/KamrynH-CS/theforge-calculator" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline inline-flex items-center gap-1">
-                        <ForkIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        KamrynH-CS/theforge-calculator
-                    </a>
-                </span>
-            </div>
-
             {/* 3 Columns Layout */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] xl:grid-cols-[300px_1fr_350px] gap-4 sm:gap-6 items-start lg:items-center">
                 
@@ -647,18 +652,13 @@ const ARMOR_TYPES = [
                 </div>
 
                 {/* CENTER PANEL: Cauldron & Slots */}
-                <div className="flex flex-col items-center justify-center w-full relative order-1 lg:order-2 mb-6 lg:mb-0">
+                <div className="flex flex-col items-center justify-start w-full relative order-1 lg:order-2 mb-6 lg:mb-0 pt-0">
                     {/* Chain decoration (visual only, simplified) */}
                     <div className="absolute top-0 w-full flex justify-center -z-10 opacity-50 pointer-events-none">
                          {/* You would put chain SVG here */}
                     </div>
 
                     {/* Predicted Item - Compact */}
-                    {craftType === "Weapon" && (
-                        <div className="mb-2 text-[9px] sm:text-[10px] text-zinc-500 italic text-center">
-                            Images and chances like armor will be added later
-                        </div>
-                    )}
                     {results && results.odds && Object.keys(results.odds).length > 0 && (() => {
                         const sortedItems = currentTypes
                             .map(type => ({ type, pct: results.odds[type] || 0 }))
@@ -668,7 +668,7 @@ const ARMOR_TYPES = [
                         if (predictedItem && predictedItem.pct > 0) {
                             const possibleItems = getPossibleItemImagesWithChances(predictedItem.type, predictedItem.pct, craftType);
                             return (
-                                <div className="mb-3 sm:mb-4 bg-black/70 border border-zinc-600 rounded-sm px-3 sm:px-4 py-2 sm:py-2.5 text-center">
+                                <div className="mb-5 sm:mb-6 mt-0 sm:mt-0 md:-mt-16 lg:-mt-24 xl:-mt-28 bg-black/70 border border-zinc-600 rounded-sm px-3 sm:px-4 py-2 sm:py-2.5 text-center">
                                     <div className="text-[10px] sm:text-xs text-zinc-400 uppercase tracking-wider mb-0.5">
                                         Predicted {craftType}
                                     </div>
@@ -678,20 +678,12 @@ const ARMOR_TYPES = [
                                     {possibleItems.length > 0 ? (
                                         <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                                             {possibleItems.map((item, idx) => (
-                                                <div key={idx} className="flex flex-col items-center">
-                                                    <img 
-                                                        src={item.image} 
-                                                        alt={`${predictedItem.type} variation ${idx + 1}`}
-                                                        className="h-8 sm:h-10 md:h-12 w-auto object-contain opacity-80"
-                                                        onError={(e) => {
-                                                            // Hide image if it fails to load
-                                                            (e.target as HTMLImageElement).style.display = 'none';
-                                                        }}
-                                                    />
-                                                    <span className="text-[8px] sm:text-[9px] text-white mt-0.5 font-medium">
-                                                        {item.ratio}
-                                                    </span>
-                                                </div>
+                                                <PredictedItemImage 
+                                                    key={idx}
+                                                    image={item.image}
+                                                    ratio={item.ratio}
+                                                    alt={`${predictedItem.type} variation ${idx + 1}`}
+                                                />
                                             ))}
                                         </div>
                                     ) : (
@@ -706,9 +698,9 @@ const ARMOR_TYPES = [
                     })()}
 
                     {/* Cauldron Area */}
-                    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md aspect-square flex flex-col items-center justify-center bg-radial-gradient from-orange-900/20 to-transparent rounded-full mb-4 sm:mb-6 md:mb-8">
+                    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center justify-center bg-radial-gradient from-orange-900/20 to-transparent rounded-full mb-1.5 sm:mb-2">
                         {/* Slots */}
-                        <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8 z-10 px-2 sm:px-0">
+                        <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-1.5 sm:mb-2 z-10 px-2 sm:px-0">
                             {slots.map((slot, idx) => (
                                 <SlotButton 
                                     key={idx} 
@@ -719,27 +711,65 @@ const ARMOR_TYPES = [
                             ))}
                         </div>
 
-                        <div className="text-center mb-4 sm:mb-6">
+                        {/* Composition */}
+                        {results && results.composition && Object.keys(results.composition).length > 0 && (
+                            <div className="text-center mb-1.5 sm:mb-2 px-2">
+                                <div className="text-[10px] sm:text-[11px] text-zinc-500 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 leading-tight">
+                                    {(() => {
+                                        const compositionEntries = Object.entries(results.composition)
+                                            .sort((a, b) => b[1] - a[1]); // Sort by percentage descending
+                                        const maxPct = compositionEntries[0]?.[1] || 0;
+                                        
+                                        return compositionEntries.map(([oreName, pct], index) => {
+                                            const isHighest = pct === maxPct && pct > 0;
+                                            return (
+                                                <span key={oreName}>
+                                                    <span className={isHighest ? 'text-yellow-400 font-semibold' : 'text-zinc-500'}>
+                                                        {oreName}({pct.toFixed(0)}%)
+                                                    </span>
+                                                    {index < compositionEntries.length - 1 && (
+                                                        <span className="text-zinc-600 mx-0.5">+</span>
+                                                    )}
+                                                </span>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="text-center mb-1.5 sm:mb-2">
                              <div className="text-zinc-400 text-sm sm:text-base md:text-lg font-medium uppercase tracking-wider">Multiplier</div>
                              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{results?.combinedMultiplier ? `${results.combinedMultiplier.toFixed(2)}x` : '0x'}</div>
                         </div>
-
-                        {results?.traits && results.traits.length > 0 && (
-                             <div className="w-full bg-black/40 border border-white/10 rounded-lg p-2 sm:p-3 md:p-4 max-h-[150px] sm:max-h-[180px] md:max-h-[200px] overflow-y-auto mb-4 sm:mb-6">
-                                <h3 className="text-orange-400 font-bold mb-2 uppercase text-xs sm:text-sm text-center">Active Traits</h3>
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    {results.traits.map((tr: any, idx: number) => (
-                                        <div key={idx} className="text-[10px] sm:text-xs text-zinc-300 bg-white/5 p-1.5 sm:p-2 rounded border border-white/5 text-center">
-                                            <div className="text-orange-300 font-bold mb-0.5 sm:mb-1">{tr.ore || 'Generic'}</div>
-                                            {tr.lines.map((l: string, i: number) => <div key={i}>{l}</div>)}
-                                        </div>
-                                    ))}
-                                </div>
-                             </div>
-                        )}
                     </div>
 
-                    <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex gap-4 justify-center">
+                    {/* Active Traits - Outside Cauldron Area */}
+                    {results?.traits && results.traits.length > 0 && (
+                         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md bg-black/40 border border-white/10 rounded-lg p-2 sm:p-3 md:p-4 mb-1.5 sm:mb-2">
+                            <h3 className="text-orange-400 font-bold mb-1.5 sm:mb-2 uppercase text-xs sm:text-sm text-center">Active Traits</h3>
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                {results.traits.map((tr: any, idx: number) => (
+                                    <div key={idx} className="text-[10px] sm:text-xs text-zinc-300 bg-white/5 p-1.5 sm:p-2 rounded border border-white/5 text-center w-full h-full flex flex-col justify-center">
+                                        <div className="text-orange-300 font-bold mb-0.5 sm:mb-1">{tr.ore || 'Generic'}</div>
+                                        <div className="space-y-0.5">
+                                            {tr.lines.map((l: string, i: number) => (
+                                                <div key={i} className="text-[9px] sm:text-[10px]">{l}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                         </div>
+                    )}
+
+                    <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center gap-2 sm:gap-3 mt-8 sm:mt-12 md:mt-16">
+                        <div className="text-center text-[11px] sm:text-xs md:text-sm text-zinc-500 font-medium px-2">
+                            Support this project by leaving a star on{' '}
+                            <a href="https://github.com/ghotality/theforge-crafting" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline">
+                                GitHub
+                            </a>
+                        </div>
                         <button 
                             className="bg-gradient-to-t from-red-500/80 to-orange-500/80 hover:from-red-500 hover:to-orange-500 text-white font-bold py-2 sm:py-2.5 md:py-3 px-6 sm:px-7 md:px-8 rounded-sm border-2 border-red-900/50 uppercase tracking-widest transition-all shadow-lg shadow-red-900/20 text-xs sm:text-sm md:text-base"
                             onClick={clearAll}
