@@ -1,12 +1,3 @@
-/* BASE BODY */
-body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    margin: 0;
-}
-
 /* HEADER */
 .header-container {
     display: flex;
@@ -26,11 +17,12 @@ body {
     gap: 30px;
 }
 
-.header-links div {
+.header-links a, .header-links div {
     font-size: 22px;
     font-weight: bold;
     color: #ffffff;
     cursor: pointer;
+    text-decoration: none;
 }
 
 /* SECTION TITLE */

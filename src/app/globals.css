@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #1e1e1e;
+  --panel: #2b2b2b;
+  --panel-2: #2f2f31;
+  --border: #555;
+  --muted: #aaaaaa;
+  --accent: #3a8bff;
+  --text: #e0e0e0;
+  --card-shadow: rgba(0, 0, 0, 0.45);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+
+/* Custom silver gradient for the title */
+.silver-text {
+  background: linear-gradient(to bottom, 
+    #ffffff 0%, 
+    #d4d4d4 40%, 
+    #8a8a8a 50%, 
+    #a8a8a8 60%, 
+    #d4d4d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  text-transform: uppercase;
+}
