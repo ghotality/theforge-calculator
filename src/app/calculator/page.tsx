@@ -7,6 +7,7 @@ import Link from 'next/link';
 import oresDataRaw from '../../data/ores.json';
 import weaponOddsRaw from '../../data/weaponOdds.json';
 import armorOddsRaw from '../../data/armorOdds.json';
+import forgeDataRaw from '../../data/forgeData.json';
 
 // Simple Icons components (SVG)
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -43,10 +44,15 @@ type SlotItem = {
 
 type OresData = Record<string, OreData>;
 type OddsData = Record<string, Record<string, number>>;
+type ForgeData = {
+  weapons: Record<string, number>;
+  armor: Record<string, number>;
+};
 
 const ores: OresData = oresDataRaw as unknown as OresData;
 const weaponOdds: OddsData = weaponOddsRaw;
 const armorOdds: OddsData = armorOddsRaw;
+const forgeData: ForgeData = forgeDataRaw as ForgeData;
 
 // --- Helper Functions ---
 function calculateCombinedMultiplier(selectedOres: Record<string, number>) {
@@ -290,6 +296,19 @@ function getPossibleItemImagesWithChances(categoryName: string, categoryChance: 
   }
 }
 
+// Function to calculate masterwork price: (base price x multiplier) + 10%
+function calculateMasterworkPrice(itemName: string, multiplier: number, craftType: "Weapon" | "Armor"): number | null {
+  const priceData = craftType === "Weapon" ? forgeData.weapons : forgeData.armor;
+  const basePrice = priceData[itemName];
+  
+  if (!basePrice) return null;
+  
+  const priceWithMultiplier = basePrice * multiplier;
+  const finalPrice = priceWithMultiplier * 1.1; // +10%
+  
+  return finalPrice;
+}
+
 // --- Components ---
 
 const RarityColors: Record<string, string> = {
@@ -448,13 +467,17 @@ const ARMOR_TYPES = [
     type,
     pct,
     craftType,
-    possibleItems
+    possibleItems,
+    multiplier
   }: {
     type: string,
     pct: number,
     craftType: "Weapon" | "Armor",
-    possibleItems: Array<{image: string, ratio: string}>
+    possibleItems: Array<{image: string, ratio: string}>,
+    multiplier: number
   }) => {
+    const masterworkPrice = calculateMasterworkPrice(type, multiplier, craftType);
+    
     // Only animate when the item type actually changes, not just the percentage
     // Using a key based on type ensures the component remounts and animation triggers only on type change
     return (
@@ -469,7 +492,7 @@ const ARMOR_TYPES = [
                 {type} <span className="text-zinc-300 font-normal">({(pct * 100).toFixed(1)}%)</span>
             </div>
             {possibleItems.length > 0 ? (
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1.5">
                     {possibleItems.map((item, idx) => (
                         <PredictedItemImage 
                             key={idx}
@@ -480,8 +503,13 @@ const ARMOR_TYPES = [
                     ))}
                 </div>
             ) : (
-                <div className="text-[9px] sm:text-[10px] text-zinc-500 italic">
+                <div className="text-[9px] sm:text-[10px] text-zinc-500 italic mb-1.5">
                     {craftType === "Weapon" ? "Weapon image coming soon" : "No images available"}
+                </div>
+            )}
+            {masterworkPrice !== null && (
+                <div className="text-[10px] sm:text-xs text-yellow-400 font-semibold">
+                    Masterwork price: ${masterworkPrice >= 1000 ? masterworkPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : masterworkPrice.toFixed(2)}
                 </div>
             )}
         </div>
@@ -754,7 +782,7 @@ const ARMOR_TYPES = [
                     </div>
 
                     {/* Predicted Item - Compact */}
-                    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md min-h-[120px] sm:min-h-[140px] md:min-h-[160px] flex justify-center items-start">
+                    <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md min-h-[120px] sm:min-h-[140px] md:min-h-[160px] flex justify-center items-start mb-4 sm:mb-5 md:mb-6">
                         {results && results.odds && Object.keys(results.odds).length > 0 && (() => {
                             const sortedItems = currentTypes
                                 .map(type => ({ type, pct: results.odds[type] || 0 }))
@@ -769,6 +797,7 @@ const ARMOR_TYPES = [
                                         pct={predictedItem.pct}
                                         craftType={craftType}
                                         possibleItems={possibleItems}
+                                        multiplier={results.combinedMultiplier || 0}
                                     />
                                 );
                             }

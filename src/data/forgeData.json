@@ -1,0 +1,22 @@
+{
+  "weapons": {
+    "Dagger": 68,
+    "Straight Sword": 120,
+    "Gauntlet": 205,
+    "Katana": 324,
+    "Great Sword": 485,
+    "Great Axe": 850,
+    "Colossal Sword": 1355
+  },
+  "armor": {
+    "Light Helmet": 65,
+    "Light Leggings": 112.5,
+    "Light Chestplate": 225,
+    "Medium Helmet": 335,
+    "Medium Leggings": 485,
+    "Medium Chestplate": 850,
+    "Heavy Helmet": 1020,
+    "Heavy Leggings": 1200,
+    "Heavy Chestplate": 1355
+  }
+}
