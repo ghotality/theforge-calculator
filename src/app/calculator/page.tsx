@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo, memo, useRef } from 'react';
 import Link from 'next/link';
 // Removed forgecalc.css import to use Tailwind completely
 
@@ -21,6 +21,21 @@ const ForkIcon = ({ className }: { className?: string }) => (
     <path d="M6 3v12" />
     <circle cx="6" cy="18" r="3" />
     <path d="M18 9a9 9 0 0 1-9 9" />
+  </svg>
+);
+
+const TrashIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <defs>
+      <mask id="trashMask">
+        <rect width="24" height="24" fill="white" />
+        <line x1="9" y1="9" x2="9" y2="19" stroke="black" strokeWidth="1.5" />
+        <line x1="12" y1="9" x2="12" y2="19" stroke="black" strokeWidth="1.5" />
+        <line x1="15" y1="9" x2="15" y2="19" stroke="black" strokeWidth="1.5" />
+      </mask>
+    </defs>
+    <path d="M5 7.5C5 6.67157 5.67157 6 6.5 6H17.5C18.3284 6 19 6.67157 19 7.5V20.5C19 21.3284 18.3284 22 17.5 22H6.5C5.67157 22 5 21.3284 5 20.5V7.5Z" mask="url(#trashMask)" />
+    <path d="M8.5 2C8.5 2 8.5 1 9.5 1H14.5C15.5 1 15.5 2 15.5 2H19.5C20.3284 2 21 2.67157 21 3.5V4.5H3V3.5C3 2.67157 3.67157 2 4.5 2H8.5Z" />
   </svg>
 );
 
@@ -405,8 +420,65 @@ const loadedImageCache = new Set<string>();
     );
   });
 
+  // Component for Circular Progress Bar
+  const CircularProgress = ({ progress, size = 64 }: { progress: number, size?: number }) => {
+    const radius = (size - 8) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (progress * circumference);
+    
+    return (
+      <svg 
+        width={size} 
+        height={size} 
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-90"
+        style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.8))' }}
+      >
+        {/* Background circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="4"
+        />
+        {/* Progress circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.9)"
+          strokeWidth="4"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-100 ease-linear"
+        />
+      </svg>
+    );
+  };
+
   // Component for Slot Button to handle its own state cleanly
-  const SlotButton = ({ slot, index, onRemoveOne }: { slot: SlotItem | null, index: number, onRemoveOne: (i: number) => void }) => {
+  const SlotButton = ({ slot, index, onRemoveOne, onRemoveAll }: { slot: SlotItem | null, index: number, onRemoveOne: (i: number) => void, onRemoveAll: (i: number) => void }) => {
+      const [isHolding, setIsHolding] = useState(false);
+      const [progress, setProgress] = useState(0);
+      const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+      const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+      const wasHoldingRef = useRef(false);
+
+      // Cleanup on unmount
+      useEffect(() => {
+        return () => {
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+          }
+          if (holdStartTimeoutRef.current) {
+            clearTimeout(holdStartTimeoutRef.current);
+          }
+        };
+      }, []);
+
       // If empty, render simple disabled-like button
       if (!slot) {
           return (
@@ -420,9 +492,102 @@ const loadedImageCache = new Set<string>();
 
       const oreImage = getOreImagePath(slot.name);
       
+      const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        wasHoldingRef.current = false;
+        
+        // Wait 150ms before starting the hold progress
+        // This allows quick clicks to work normally
+        holdStartTimeoutRef.current = setTimeout(() => {
+          setIsHolding(true);
+          setProgress(0);
+          
+          // Start progress animation
+          const startTime = Date.now();
+          const duration = 750; // 0.75 seconds
+          
+          const interval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const newProgress = Math.min(elapsed / duration, 1);
+            setProgress(newProgress);
+            
+            if (newProgress >= 1) {
+              clearInterval(interval);
+              progressIntervalRef.current = null;
+              // Ensure progress is at 100% before deletion
+              setProgress(1);
+              // Small delay to ensure visual completion
+              setTimeout(() => {
+                wasHoldingRef.current = true;
+                onRemoveAll(index);
+                setIsHolding(false);
+                setProgress(0);
+              }, 50);
+            }
+          }, 16); // ~60fps
+          
+          // Store interval reference (we'll clean it up on mouse up/leave)
+          progressIntervalRef.current = interval;
+        }, 150);
+      };
+
+      const handleMouseUp = () => {
+        // Clear the hold start timeout if it hasn't fired yet
+        if (holdStartTimeoutRef.current) {
+          clearTimeout(holdStartTimeoutRef.current);
+          holdStartTimeoutRef.current = null;
+        }
+        
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        // Mark that we were holding if progress > 0
+        if (progress > 0) {
+          wasHoldingRef.current = true;
+        }
+        setIsHolding(false);
+        setProgress(0);
+      };
+
+      const handleMouseLeave = () => {
+        // Clear the hold start timeout if it hasn't fired yet
+        if (holdStartTimeoutRef.current) {
+          clearTimeout(holdStartTimeoutRef.current);
+          holdStartTimeoutRef.current = null;
+        }
+        
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        // Mark that we were holding if progress > 0
+        if (progress > 0) {
+          wasHoldingRef.current = true;
+        }
+        setIsHolding(false);
+        setProgress(0);
+      };
+
+      const handleClick = (e: React.MouseEvent) => {
+        // Prevent click if we were holding (even briefly)
+        if (wasHoldingRef.current) {
+          e.preventDefault();
+          wasHoldingRef.current = false;
+          return;
+        }
+        // Only trigger if we didn't hold at all
+        if (!isHolding && progress === 0) {
+          onRemoveOne(index);
+        }
+      };
+      
       return (
         <button 
-            onClick={() => onRemoveOne(index)}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onClick={handleClick}
             className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 border-2 ${RarityColors[ores[slot.name].rarity] || 'border-white'} bg-black/60 hover:bg-black/80 transition-all cursor-pointer flex flex-col items-start justify-start p-0.5 sm:p-1 relative group overflow-hidden select-none animate-pop-in`}
         >
             {oreImage ? (
@@ -441,10 +606,13 @@ const loadedImageCache = new Set<string>();
             <span className={`text-[7px] sm:text-[8px] md:text-[10px] text-left leading-tight font-medium break-words w-full px-1 z-10 relative ${oreImage ? 'text-white' : ''}`}>{slot.name}</span>
             <span className="absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 text-[8px] sm:text-[10px] md:text-xs font-bold text-white z-10">x{slot.count}</span>
             
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                <span className="text-red-500 text-[8px] sm:text-[9px] md:text-[10px] uppercase font-bold bg-black/80 px-0.5 sm:px-1 rounded">
-                    Click to Remove
-                </span>
+            <div className={`absolute inset-0 flex items-center justify-center transition-opacity z-20 pointer-events-none bg-black/40 ${isHolding ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center">
+                    {isHolding && (
+                        <CircularProgress progress={progress} size={56} />
+                    )}
+                    <TrashIcon className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white/80 drop-shadow-[0_0_10px_rgba(255,0,0,1)] filter relative z-10 ${isHolding ? 'scale-110' : ''} transition-transform`} />
+                </div>
             </div>
         </button>
       );
@@ -668,6 +836,12 @@ const loadedImageCache = new Set<string>();
       }
   };
 
+  const removeAllOresFromSlot = (index: number) => {
+      const newSlots = [...slots];
+      newSlots[index] = null;
+      setSlots(newSlots);
+  };
+
   const clearAll = () => {
       setSlots([null, null, null, null]);
   };
@@ -857,6 +1031,7 @@ const loadedImageCache = new Set<string>();
                                     index={idx}
                                     slot={slot}
                                     onRemoveOne={removeOneOreFromSlot}
+                                    onRemoveAll={removeAllOresFromSlot}
                                 />
                             ))}
                         </div>
