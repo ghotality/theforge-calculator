@@ -38,6 +38,7 @@ export default function Home() {
             src="/gamethumb.png"
             alt=""
             fill
+            sizes="100vw"
             className="object-cover"
             style={{ opacity: 0.4 }}
             priority
@@ -89,7 +90,7 @@ export default function Home() {
              <div className="text-left">
                 <div className="text-xs text-zinc-500 uppercase tracking-wider font-medium mb-0.5">Developed by</div>
                 <div className="text-zinc-200 font-semibold">
-                   lrdd
+                   <a href="https://github.com/ghotality" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">lrdd</a> & <a href="https://github.com/rxposo" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">rxposo</a>
                 </div>
              </div>
           </div>
