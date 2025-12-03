@@ -4,5 +4,5 @@ VERSION=recommended
 DISPLAY_NAME=The Forge
 DESCRIPTION=
 SUBDOMAIN=theforge
-START=npm ci --production && npm run start
+START=npm run start
 AUTORESTART=true

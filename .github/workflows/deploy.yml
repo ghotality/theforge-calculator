@@ -26,21 +26,25 @@ jobs:
       - name: Build Next.js application
         run: npm run build
       
+      - name: Install production dependencies only
+        run: npm ci --production
+      
       - name: Set permissions
-        run: chmod -R 777 .next next.config.ts package.json
+        run: chmod -R 777 .next next.config.ts package.json node_modules
       
       - name: Create deployment package
         run: |
           zip -r project.zip \
             package.json \
-            package-lock.json \
             .next \
             next.config.ts \
             postcss.config.mjs \
             tsconfig.json \
             public \
             squarecloud.app \
-            -x ".next/cache/*"
+            node_modules \
+            -x ".next/cache/*" \
+            -x "node_modules/.cache/*"
       
       - name: Deploy to Square Cloud
         uses: squarecloudofc/github-action@v2
