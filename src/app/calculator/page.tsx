@@ -510,12 +510,12 @@ const loadedImageCache = new Set<string>();
     if (loadedImageCache.has(image)) {
       return (
         <div className="group relative flex flex-col items-center">
-          <div className="relative h-8 sm:h-10 md:h-12 w-auto">
+          <div className="relative h-8 sm:h-10 md:h-12 w-8 sm:w-10 md:w-12">
             <Image 
               src={image} 
               alt={alt}
-              width={48}
-              height={48}
+              fill
+              sizes="48px"
               className="object-contain opacity-80 transition-opacity duration-200 group-hover:opacity-100"
             />
           </div>
@@ -551,12 +551,12 @@ const loadedImageCache = new Set<string>();
     
     return (
       <div className="group relative flex flex-col items-center">
-        <div className="relative h-8 sm:h-10 md:h-12 w-auto">
+        <div className="relative h-8 sm:h-10 md:h-12 w-8 sm:w-10 md:w-12">
           <Image 
             src={image} 
             alt={alt}
-            width={48}
-            height={48}
+            fill
+            sizes="48px"
             className="object-contain opacity-80 transition-opacity duration-200 group-hover:opacity-100"
             onLoad={handleLoad}
             onError={handleError}
@@ -798,6 +798,7 @@ const loadedImageCache = new Set<string>();
                           src={oreImage} 
                           alt={slot.name}
                           fill
+                          sizes="80px"
                           className="object-cover opacity-80"
                       />
                       <div className={`absolute inset-0 ${RarityBg[ores[slot.name].rarity]} opacity-30`} />
@@ -867,6 +868,7 @@ const loadedImageCache = new Set<string>();
                         src={oreImage} 
                         alt={oreName}
                         fill
+                        sizes="80px"
                         className="object-cover opacity-80"
                     />
                     <div className={`absolute inset-0 ${RarityBg[data.rarity]} opacity-30`} />
@@ -1197,6 +1199,7 @@ const loadedImageCache = new Set<string>();
             src="/forge.png"
             alt=""
             fill
+            sizes="100vw"
             className="object-cover"
             style={{ opacity: 0.4 }}
             priority
@@ -1321,6 +1324,7 @@ const loadedImageCache = new Set<string>();
                                                           src={item.image} 
                                                           alt={item.name}
                                                           fill
+                                                          sizes="48px"
                                                           className="object-contain opacity-80 transition-opacity duration-200 group-hover:opacity-100"
                                                       />
                                                     </div>
@@ -1407,6 +1411,7 @@ const loadedImageCache = new Set<string>();
                                                           src={item.image} 
                                                           alt={item.name}
                                                           fill
+                                                          sizes="48px"
                                                           className="object-contain opacity-80 transition-opacity duration-200 group-hover:opacity-100"
                                                           loading="lazy"
                                                       />
