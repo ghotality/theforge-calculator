@@ -18,5 +18,42 @@
     "Heavy Helmet": 1020,
     "Heavy Leggings": 1200,
     "Heavy Chestplate": 1355
+  },
+  "weaponStats": {
+    "Dagger": 4.3,
+    "Gladius Dagger": 4.3,
+    "Falchion Knife": 4.3,
+    "Hook": 4.73,
+    "Falchion": 7.5,
+    "Cutlass": 9.375,
+    "Rapier": 7.5,
+    "Ironhand": 7.6,
+    "Relevator": 9.6,
+    "Uchigatana": 8.5,
+    "Tachi": 8.925,
+    "Crusader Sword": 12,
+    "Long Sword": 12,
+    "Scythe": 14.25,
+    "Double Battle Axe": 15.75,
+    "Great Sword": 20,
+    "Hammer": 22,
+    "Skull Crusher": 24
+  },
+  "armorStats": {
+    "Light Helmet": 3.75,
+    "Light Leggings": 4.375,
+    "Light Chestplate": 5,
+    "Medium Helmet": 6.25,
+    "Samurai Helmet": 8,
+    "Medium Leggings": 7.5,
+    "Samurai Leggings": 9,
+    "Medium Chestplate": 8.75,
+    "Samurai Chestplate": 12.75,
+    "Knight Helmet": 12.5,
+    "Dark Knight Helmet": 18.75,
+    "Knight Leggings": 13.75,
+    "Dark Knight Leggings": 21.875,
+    "Knight Chestplate": 16.25,
+    "Dark Knight Chestplate": 25
   }
 }
