@@ -106,6 +106,8 @@ type OddsData = Record<string, Record<string, number>>;
 type ForgeData = {
   weapons: Record<string, number>;
   armor: Record<string, number>;
+  weaponStats?: Record<string, number>;
+  armorStats?: Record<string, number>;
 };
 
 const ores: OresData = oresDataRaw as unknown as OresData;
@@ -455,6 +457,18 @@ function calculateMasterworkPrice(itemName: string, multiplier: number, craftTyp
   const finalPrice = priceWithMultiplier * 1.1; // +10%
   
   return finalPrice;
+}
+
+// Function to calculate damage/defense: (base * multiplier) * 2
+function calculateMasterworkStat(itemName: string, multiplier: number, craftType: "Weapon" | "Armor"): number | null {
+  const statsData = craftType === "Weapon" ? forgeData.weaponStats : forgeData.armorStats;
+  if (!statsData) return null;
+  
+  const baseStat = statsData[itemName];
+  if (baseStat === undefined) return null;
+  
+  const finalStat = (baseStat * multiplier) * 2;
+  return finalStat;
 }
 
 // --- Components ---
@@ -919,7 +933,7 @@ const loadedImageCache = new Set<string>();
     const predictedData = useMemo(() => {
       const hasResults = results && results.odds && Object.keys(results.odds).length > 0;
       if (!hasResults) {
-        return { isVisible: false, predictedItem: null, possibleItems: [], masterworkPrice: null };
+        return { isVisible: false, predictedItem: null, possibleItems: [], masterworkPrice: null, masterworkStat: null };
       }
       
       const sortedItems = currentTypes
@@ -929,7 +943,7 @@ const loadedImageCache = new Set<string>();
       const isVisible = predictedItem && predictedItem.pct > 0;
       
       if (!isVisible) {
-        return { isVisible: false, predictedItem: null, possibleItems: [], masterworkPrice: null };
+        return { isVisible: false, predictedItem: null, possibleItems: [], masterworkPrice: null, masterworkStat: null };
       }
       
       const possibleItems = getPossibleItemImagesWithChances(predictedItem.type, predictedItem.pct, craftType);
@@ -938,10 +952,36 @@ const loadedImageCache = new Set<string>();
       const multiplier = results?.combinedMultiplier || 0;
       const masterworkPrice = calculateMasterworkPrice(predictedItem.type, multiplier, craftType);
       
-      return { isVisible, predictedItem, possibleItems: filteredItems, masterworkPrice };
+      // Calculate stats for all variants to get min-max range
+      const stats = filteredItems
+        .map(item => calculateMasterworkStat(item.name, multiplier, craftType))
+        .filter((stat): stat is number => stat !== null);
+      
+      let masterworkStat: number | { min: number, max: number } | null = null;
+      
+      if (stats.length > 0) {
+        if (stats.length === 1) {
+          // Single variant - show single value
+          masterworkStat = stats[0];
+        } else {
+          // Multiple variants - check if all stats are equal
+          const min = Math.min(...stats);
+          const max = Math.max(...stats);
+          
+          // If min and max are the same (all variants have same stat), show single value
+          if (Math.abs(min - max) < 0.01) { // Use small epsilon for floating point comparison
+            masterworkStat = min;
+          } else {
+            // Different stats - show range
+            masterworkStat = { min, max };
+          }
+        }
+      }
+      
+      return { isVisible, predictedItem, possibleItems: filteredItems, masterworkPrice, masterworkStat };
     }, [results, currentTypes, craftType]);
     
-    const { isVisible, predictedItem, possibleItems, masterworkPrice } = predictedData;
+    const { isVisible, predictedItem, possibleItems, masterworkPrice, masterworkStat } = predictedData;
 
     return (
         <div
@@ -973,8 +1013,23 @@ const loadedImageCache = new Set<string>();
                     {craftType === "Weapon" ? "Weapon image coming soon" : "No images available"}
                 </div>
             )}
-            <div className={`text-[10px] sm:text-xs text-yellow-400 font-semibold transition-opacity duration-300 ${masterworkPrice !== null ? 'opacity-100' : 'opacity-0'}`}>
-                Masterwork price: ${masterworkPrice !== null ? (masterworkPrice >= 1000 ? masterworkPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : masterworkPrice.toFixed(2)) : '0.00'}
+            <div className={`text-[10px] sm:text-xs font-semibold transition-opacity duration-300 ${masterworkPrice !== null ? 'opacity-100' : 'opacity-0'}`}>
+                {masterworkPrice !== null && masterworkStat !== null && (
+                  <>
+                    <div className={craftType === "Weapon" ? "text-red-300" : "text-green-300"}>
+                      {craftType === "Weapon" ? "Damage" : "Defense"}: {
+                        typeof masterworkStat === 'number' 
+                          ? (craftType === "Weapon" ? masterworkStat.toFixed(2) : Math.round(masterworkStat).toString())
+                          : (craftType === "Weapon" 
+                              ? `${masterworkStat.min.toFixed(2)}-${masterworkStat.max.toFixed(2)}`
+                              : `${Math.round(masterworkStat.min)}-${Math.round(masterworkStat.max)}`)
+                      }
+                    </div>
+                    <div style={{ color: '#F4E4BC' }}>
+                      Price: ${masterworkPrice >= 1000 ? masterworkPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : masterworkPrice.toFixed(2)}
+                    </div>
+                  </>
+                )}
             </div>
         </div>
     );
