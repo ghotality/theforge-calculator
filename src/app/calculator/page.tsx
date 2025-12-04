@@ -454,7 +454,7 @@ function calculateMasterworkPrice(itemName: string, multiplier: number, craftTyp
   if (!basePrice) return null;
   
   const priceWithMultiplier = basePrice * multiplier;
-  const finalPrice = priceWithMultiplier * 1.1; // +10%
+  const finalPrice = priceWithMultiplier;
   
   return finalPrice;
 }
